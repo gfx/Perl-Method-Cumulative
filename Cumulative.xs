@@ -5,7 +5,6 @@
 
 #include "ppport.h"
 
-#define  NEED_mro_get_linear_isa
 #include "mro_compat.h"
 #include "mgx.h"
 

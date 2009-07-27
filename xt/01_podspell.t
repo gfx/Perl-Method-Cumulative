@@ -13,6 +13,7 @@ $ENV{LANG} = 'C';
 all_pod_files_spelling_ok('lib');
 
 __DATA__
+gfx
 Goro Fuji (gfx)
 gfuji(at)cpan.org
 Method::Cumulative
