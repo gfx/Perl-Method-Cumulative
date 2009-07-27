@@ -1,4 +1,7 @@
 Revision history for Perl extension Method::Cumulative
 
+0.02 Mon Jul 27 13:09:03 2009
+	- use XS::MRO::Compat
+
 0.01 Sun Apr 26 16:13:19 2009
         - original version; created by Module::Setup
