@@ -40,8 +40,8 @@
 \bauthor\b
 
 # skip object files
-Comulative\.c$
-\.o(?:bj)$
+Cumulative\.c$
+\.o(?:bj)?$
 \.bs$
 
 ppport\.h$

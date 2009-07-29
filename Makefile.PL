@@ -28,4 +28,4 @@ clean_files qw(
 	cover_db
 );
 
-WriteAll;
+WriteAll check_nmake => 0;

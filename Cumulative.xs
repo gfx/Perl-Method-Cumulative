@@ -243,6 +243,8 @@ CODE:
 	gv = (GV*)SvRV(symref);
 
 	/* redefine */
+	SvREFCNT_dec(GvCV(gv));
+	GvCV(gv) = NULL;
 	xsub = newXS(
 		Perl_form(aTHX_ "%s::%s", HvNAME(GvSTASH(gv)), GvNAME(gv)),
 		Method__Cumulative_dispatcher,
