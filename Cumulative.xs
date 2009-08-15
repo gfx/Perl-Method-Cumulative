@@ -6,12 +6,14 @@
 #include "ppport.h"
 
 #include "mro_compat.h"
-#include "mgx.h"
+
+#define XS_MAGIC_EXT_DECL STATIC
+#include "magic_ext.h"
 
 #define PACKAGE "Method::Cumulative"
 
-#define MC_BASE_FIRST(mg) (mg->mg_private)
-#define MC_BASE_FIRST_on(mg) (void)(mg->mg_private = TRUE)
+#define MC_BASE_FIRST(mg)           MG_private(mg)
+#define MC_BASE_FIRST_on(mg) (void)(MG_private(mg) = TRUE)
 
 #define MC_AvEXTEND(av, max) STMT_START {                   \
 		if(AvMAX(av) < (max)) av_extend(av, (max)); \
@@ -38,15 +40,12 @@ mc_get_stash(pTHX_ SV* const invocant){
 static AV*
 mc_get_methods(pTHX_ CV* const cv, SV* const invocant){
 	HV* const stash = mc_get_stash(aTHX_ invocant);
-	MAGIC* const mg = mg_find_by_vtbl((SV*)cv, &mc_vtbl);
+	MAGIC* const mg = mgx_get((SV*)cv, &mc_vtbl);
 	SV* gensv;
 	AV* methods;
 	SV* namesv;
 
-	assert(stash != NULL);
-	assert(mg != NULL);
-
-	if(!mg->mg_ptr){
+	if(!MG_sv(mg)){
 		AV* const meta   = newAV();
 		GV* const namegv = CvGV(cv);
 
@@ -58,11 +57,10 @@ mc_get_methods(pTHX_ CV* const cv, SV* const invocant){
 		av_store(meta, M_METHODS, (SV*)methods);
 		av_store(meta, M_NAME,    namesv);
 
-		mg->mg_ptr = (char*)meta;
-		mg->mg_len = HEf_SVKEY;
+		MG_sv_set(mg, (SV*)meta);
 	}
 	else{
-		AV* const meta = (AV*)mg->mg_ptr;
+		AV* const meta = (AV*)MG_sv(mg);
 		assert(SvTYPE(meta) == SVt_PVAV);
 
 		gensv   =      AvARRAY(meta)[M_GEN];
@@ -92,14 +90,13 @@ mc_get_methods(pTHX_ CV* const cv, SV* const invocant){
 		while(svp != end){
 			HV* const st  = gv_stashsv(*svp, TRUE);
 			HE* const he  = hv_fetch_ent(st, namesv, FALSE, 0U);
-
 			if(he){
 				GV* const gv = (GV*)HeVAL(he);
 				if(!isGV(gv)) gv_init(gv, st, SvPVX(namesv), SvCUR(namesv), GV_ADDMULTI);
 
 				if(GvCVu(gv)){
-					MAGIC* const  mc = MgFind((SV*)GvCV(gv), &mc_vtbl);
-					SV* const entity = mc ? mc->mg_obj : (SV*)GvCV(gv);
+					MAGIC* const  mc = MGX_FIND((SV*)GvCV(gv), &mc_vtbl);
+					SV* const entity = mc ? MG_obj(mc) : (SV*)GvCV(gv);
 
 					av_store(methods, AvFILLp(methods)+1, entity);
 					SvREFCNT_inc_simple_void_NN(entity);
@@ -125,7 +122,7 @@ mc_invoke(pTHX_ SV* const entity, I32 const gimme, bool* const return_ok, I32 co
 	dSP;
 	I32 n;
 
-	assert(MgFind(entity, &mc_vtbl) == NULL);
+	assert(MGX_FIND(entity, &mc_vtbl) == NULL);
 
 	PUSHMARK(SP);
 
@@ -212,7 +209,7 @@ mc_check_consistancy(pTHX_ HV* const stash, MAGIC* const mg, GV* const gv){
 		GV* meth;
 
 		if(svp && (meth = (GV*)*svp) && isGV(meth) && GvCVu(meth)){
-			MAGIC* const mc = MgFind((SV*)GvCV(meth), &mc_vtbl);
+			MAGIC* const mc = MGX_FIND((SV*)GvCV(meth), &mc_vtbl);
 
 			if(mc && MC_BASE_FIRST(mg) != MC_BASE_FIRST(mc)){
 				Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
@@ -241,7 +238,6 @@ CODE:
 	}
 	
 	gv = (GV*)SvRV(symref);
-
 	/* redefine */
 	SvREFCNT_dec(GvCV(gv));
 	GvCV(gv) = NULL;
@@ -252,7 +248,8 @@ CODE:
 	);
 	CvMETHOD_on(xsub);
 
-	mg = sv_magicext((SV*)xsub, (SV*)code, PERL_MAGIC_ext, &mc_vtbl, NULL, 0);
+	mg = mgx_attach((SV*)xsub, &mc_vtbl, (SV*)code);
+	SvREFCNT_inc_simple_void_NN(code);
 
 	if(SvOK(attr_data)){
 		STRLEN len;

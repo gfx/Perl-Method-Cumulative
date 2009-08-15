@@ -76,10 +76,10 @@ for my $i(1 .. 5){
 
 	@tags = ();
 	D->foo('!');
-	is_deeply \@tags, [qw(!D !C !B !A)], 'D->foo (derived first)';
+	is_deeply \@tags, [qw(!D !C !B !A)], 'D->foo (derived first)' or die "#[@tags]";
 	@tags = ();
 	D->new->foo('?');
-	is_deeply \@tags, [qw(?D ?C ?B ?A)];
+	is_deeply \@tags, [qw(?D ?C ?B ?A)] or die "#[@tags]";
 
 	@tags = ();
 	D->bar('!');
