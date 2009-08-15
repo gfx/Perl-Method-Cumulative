@@ -8,38 +8,30 @@ use strict;
 	sub foo{
 		print "A";
 	}
-	sub bar{
-		print "A";
-	}
 
 	package B;
 	use Mouse;
-	use Method::Cumulative;
+	use parent qw(Method::Cumulative);
 
 	extends qw(A);
+
 	sub foo :CUMULATIVE{
-		print "B";
-	}
-	sub bar :CUMULATIVE(BASE FIRST){
 		print "B";
 	}
 
 	package C;
 	use Mouse;
-	use Method::Cumulative;
+	use parent qw(Method::Cumulative);
 
 	extends qw(A);
 
 	sub foo :CUMULATIVE{
 		print "C";
 	}
-	sub bar :CUMULATIVE(BASE FIRST){
-		print "C";
-	}
 
 	package D;
 	use Mouse;
-	use Method::Cumulative;
+	use parent qw(Method::Cumulative);
 	use mro 'c3';
 
 	extends qw(C B);
@@ -47,11 +39,6 @@ use strict;
 	sub foo :CUMULATIVE{
 		print "D";
 	}
-	sub bar :CUMULATIVE(BASE FIRST){
-		print "D";
-	}
 }
 D->foo(); # => DCBA
-print "\n";
-D->bar(); # => ABCD
 print "\n";
