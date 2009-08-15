@@ -7,7 +7,6 @@
 
 #include "mro_compat.h"
 
-#define XS_MAGIC_EXT_DECL STATIC
 #include "magic_ext.h"
 
 #define PACKAGE "Method::Cumulative"

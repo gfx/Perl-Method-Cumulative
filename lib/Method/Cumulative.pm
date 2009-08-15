@@ -10,6 +10,7 @@ use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
 use Sub::Attribute;
+use XS::MagicExt;
 use XS::MRO::Compat;
 
 1;
